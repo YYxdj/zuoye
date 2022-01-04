@@ -1,0 +1,48 @@
+    cd /home/hadoop/下载
+    ls
+cd /usr/local
+ls
+sudo mkdir bigdatacase
+//这里会提示你输入当前用户（本教程是hadoop用户名）的密码
+//下面给hadoop用户赋予针对bigdatacase目录的各种操作权限
+sudo chown -R hadoop:hadoop ./bigdatacase
+cd bigdatacase
+//下面创建一个dataset目录，用于保存数据集
+mkdir dataset
+//下面就可以解压缩user.zip文件
+cd ~  //表示进入hadoop用户的目录
+cd 下载
+ls
+unzip user.zip -d /usr/local/bigdatacase/dataset
+cd /usr/local/bigdatacase/dataset
+ls
+head -5 raw_user.csv
+cd /usr/local/bigdatacase/dataset
+//下面删除raw_user中的第1行
+sed -i '1d' raw_user //1d表示删除第1行，同理，3d表示删除第3行，nd表示删除第n行
+//下面删除small_user中的第1行
+sed -i '1d' small_user
+//下面再用head命令去查看文件的前5行记录，就看不到字段名称这一行了
+head -5 raw_user.csv
+head -5 small_user.csv
+cd /usr/local/bigdatacase/dataset
+vim pre_deal.sh
+cd /usr/local/bigdatacase/dataset
+bash ./pre_deal.sh small_user.csv user_table.txt  
+head -10 user_table.txt
+cd /usr/local/hadoop
+./sbin/start-all.sh
+cd /usr/local/hadoop
+./bin/hdfs dfs -mkdir -p /bigdatacase/dataset
+cd /usr/local/hadoop
+./bin/hdfs dfs -put /usr/local/bigdatacase/dataset/user_table.txt /bigdatacase/dataset
+cd /usr/local/hadoop
+./bin/hdfs dfs -cat /bigdatacase/dataset/user_table.txt | head -10
+service mysql start  //可以在Linux的任何目录下执行该命令
+cd /usr/local/hive
+./bin/hive   //启动Hive
+hive>  create database dblab;
+hive>  use dblab;
+hive>  CREATE EXTERNAL TABLE dblab.bigdata_user(id INT,uid STRING,item_id STRING,behavior_type INT,item_category STRING,visit_date DATE,province STRING) COMMENT 'Welcome to xmu dblab!' ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t' STORED AS TEXTFILE LOCATION '/bigdatacase/dataset';
+hive>  select * from bigdata_user limit 10;
+hive>  select behavior_type from bigdata_user limit 10;

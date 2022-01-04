@@ -1,0 +1,26 @@
+service mysql start  //可以在Linux的任何目录下执行该命令
+cd /usr/local/hadoop
+./sbin/start-all.sh
+cd /usr/local/hive
+./bin/hive   //启动Hive
+hive> use dblab; //使用dblab数据库
+hive> show tables; //显示数据库中所有表。
+hive> show create table bigdata_user; //查看bigdata_user表的各种属性；
+hive> desc bigdata_user;
+hive> select behavior_type from bigdata_user limit 10;//查看前10位用户对商品的行为
+hive> select visit_date,item_category from bigdata_user limit 20;
+hive> select e.bh, e.it  from (select behavior_type as bh, item_category as it from bigdata_user) as e  limit 20;
+hive> select count(*) from bigdata_user;//用聚合函数count()计算出表内有多少条行数据 
+hive> select count(distinct uid) from bigdata_user;//在函数内部加上distinct，查出uid不重复的数据有多少条
+hive>select count(*) from (select uid,item_id,behavior_type,item_category,visit_date,province from bigdata_user group by uid,item_id,behavior_type,item_category,visit_date,province having count(*)=1)a;
+hive>select count(*) from bigdata_user where behavior_type='1' and visit_date<'2014-12-13' and visit_date>'2014-12-10';
+hive> select count(distinct uid), day(visit_date) from bigdata_user where behavior_type='4' group by day(visit_date);
+hive> select count(*) from bigdata_user where province='江西' and visit_date='2014-12-12' and behavior_type='4';
+hive> select count(*) from bigdata_user where visit_date='2014-12-11'and behavior_type='4';//查询有多少用户在2014-12-11购买了商品
+hive> select count(*) from bigdata_user where visit_date ='2014-12-11';//查询有多少用户在2014-12-11点击了该店
+hive> select count(*) from bigdata_user where uid=10001082 and visit_date='2014-12-12';//查询用户10001082在2014-12-12点击网站的次数
+hive> select uid from bigdata_user where behavior_type='4' and visit_date='2014-12-12' group by uid having count(behavior_type='4')>5;//查询某一天在该网站购买商品超过5次的用户id
+
+hive> create table scan(province STRING,scan INT) COMMENT 'This is the search of bigdataday' ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t' STORED AS TEXTFILE;//创建新的数据表进行存储
+hive> insert overwrite table scan select province,count(behavior_type) from bigdata_user where behavior_type='1' group by province;//导入数据
+hive> select * from scan;//显示结果

@@ -1,0 +1,47 @@
+service mysql start  //可以在Linux的任何目录下执行该命令
+cd /usr/local/hadoop
+./sbin/start-all.sh
+cd /usr/local/hive
+./bin/hive   //启动Hive
+hive> create table dblab.user_action(id STRING,uid STRING, item_id STRING, behavior_type STRING, item_category STRING, visit_date DATE, province STRING) COMMENT 'Welcome to XMU dblab! ' ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t' STORED AS TEXTFILE;
+cd /usr/local/hadoop
+./bin/hdfs dfs -ls /user/hive/warehouse/dblab.db/user_action
+hive> INSERT OVERWRITE TABLE dblab.user_action select * from dblab.bigdata_user;
+hive>select * from user_action limit 10;
+
+mysql –u root –p 
+mysql> show databases; #显示所有数据库
+mysql> create database dblab; #创建dblab数据库
+mysql> use dblab; #使用数据库
+mysql>show variables like "char%";
+mysql> CREATE TABLE `dblab`.`user_action` (`id` varchar(50),`uid` varchar(50),`item_id` varchar(50),`behavior_type` varchar(10),`item_category` varchar(50), `visit_date` DATE,`province` varchar(20)) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+mysql> exit
+
+cd /usr/local/sqoop
+./bin/sqoop export --connect jdbc:mysql://localhost:3306/dblab --username root --password hadoop --table user_action --export-dir '/user/hive/warehouse/dblab.db/user_action' --fields-terminated-by '\t'; #导入命令
+mysql -u root -p
+mysql> use dblab;
+mysql> select * from user_action limit 10;
+cd /usr/local/hbase
+./bin/start-hbase.sh
+cd /usr/local/hbase
+./bin/hbase shell
+hbase> create 'user_action', { NAME => 'f1', VERSIONS => 5}
+cd /usr/local/sqoop
+./bin/sqoop  import  --connect jdbc:mysql://localhost:3306/dblab --username root --password hadoop --table user_action --hbase-table user_action --column-family f1 --hbase-row-key id --hbase-create-table -m 1
+habse> scan 'user_action',{LIMIT=>10}  #只查询前面10行
+cd /usr/local/hadoop
+./sbin/start-all.sh
+cd /usr/local/hbase
+./bin/start-hbase.sh
+hbase> truncate 'user_action'
+Truncating 'user_action' table (it may take a while):
+ - Disabling table...
+ - Truncating table...
+0 row(s) in 4.0120 seconds
+//删除以后再查看就没有记录了
+hbase> scan 'user_action',{LIMIT=>10}
+ROW                                    COLUMN+CELL                                                                                                   
+0 row(s) in 0.4010 seconds
+/usr/local/hadoop/bin/hadoop jar /usr/local/bigdatacase/hbase/ImportHBase.jar HBaseImportTest /usr/local/bigdatacase/dataset/user_action.output
+habse> scan 'user_action',{LIMIT=>10}  #只查询前面10行
